@@ -1,0 +1,26 @@
+/* 總複習遊戲版共用樣式（review/*-game/ 使用；版面比照 xyz-review-quiz） */
+:root{--bg:#fff7fb;--fg:#2b2330;--card:#fff;--bd:#f1d5e4;--mu:#7a6b80;--ok:#1f9d55;--no:#d6336c;--ac:#c2255c}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1720;--fg:#f3e9f5;--card:#2a2130;--bd:#443650;--mu:#b7a6bd}}
+:root[data-theme="dark"]{--bg:#1d1720;--fg:#f3e9f5;--card:#2a2130;--bd:#443650;--mu:#b7a6bd}
+*{box-sizing:border-box}html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font:17px/1.6 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
+a{color:var(--ac)}
+.topnav{padding:calc(10px + env(safe-area-inset-top,0px)) 16px 4px;font-size:14px;max-width:720px;margin:auto}
+#app{max-width:720px;margin:auto;padding:8px 16px 48px}
+h1{margin:6px 0;font-size:26px;color:var(--ac);text-align:center}.sub{text-align:center;color:var(--mu);font-size:14px;margin:0 0 14px}
+.card{background:var(--card);border:2px solid var(--bd);border-radius:18px;padding:14px 16px;margin:10px 0}
+.lv{display:flex;gap:12px;align-items:center;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;border-left:8px solid var(--c)}
+.lv .e{font-size:34px}.lv b{font-size:18px}.lv small{display:block;color:var(--mu)}.st{margin-left:auto;font-size:20px;letter-spacing:2px;white-space:nowrap}
+.btn{font:inherit;color:#fff;background:var(--ac);border:0;border-radius:12px;padding:9px 16px;cursor:pointer;margin:4px 4px 4px 0;min-height:44px}
+.btn.g{background:var(--card);color:var(--fg);border:2px solid var(--bd)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.top{display:flex;gap:10px;align-items:center;font-size:15px;color:var(--mu);flex-wrap:wrap}.bar{flex:1;min-width:80px;height:10px;background:var(--bd);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac);transition:width .3s}
+.stem{font-size:21px;font-weight:700;margin:12px 0;white-space:pre-line}.stem b,.o b,.ex b{color:var(--no)}
+.o{display:flex;gap:10px;width:100%;text-align:left;font:inherit;color:inherit;background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:11px 13px;margin:8px 0;cursor:pointer;min-height:48px}
+.o span{font-weight:800;color:var(--ac)}.o.ok{background:#d3f3df;border-color:var(--ok);color:#12522f}.o.no{background:#fde0ea;border-color:var(--no);color:#7a1337}
+.o.ok b,.o.no b{color:inherit}
+.ex{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(194,37,92,.08);font-size:15px}.ex.on{display:block}
+.pop{animation:p .35s}@keyframes p{50%{transform:scale(1.04)}}@media(prefers-reduced-motion:reduce){.pop{animation:none}.bar i{transition:none}}
+.big .stem{font-size:clamp(26px,4vw,56px)}.big .o{font-size:clamp(22px,3.2vw,44px);padding:14px 18px}.big .ex{font-size:clamp(18px,2.4vw,32px)}.big #app{max-width:1200px}
+.tm{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tm div{flex:1;min-width:110px;text-align:center;background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:6px}.tm b{font-size:28px;display:block}
+.mu{color:var(--mu)}
+@media print{.noprint,.topnav,button{display:none!important}body{background:#fff;color:#000}.card{border:1px solid #999;break-inside:avoid}.stem{font-size:17px}}

@@ -160,9 +160,9 @@ SEND = r"""function send(r){
 }"""
 
 NAVS = {
-    "review": '<p><a href="../">← 總複習</a>　<a href="static.html">講義版（可列印）</a></p>',
-    "book1": '<p><a href="../">← 心囚　課文與字音字形</a>　<a href="static.html">講義版（可列印）</a></p>',
-    "standalone": '<p><a href="static.html">講義版（可列印）</a></p>',
+    "review": '<p><a href="../">← 總複習</a>　<a href="static.html">講義版（可列印）</a>　<a href="../shuangci-quiz/">🎮 闖關遊戲版</a></p>',
+    "book1": '<p><a href="../">← 心囚　課文與字音字形</a>　<a href="static.html">講義版（可列印）</a>　<a href="quiz/">🎮 闖關遊戲版</a></p>',
+    "standalone": '<p><a href="static.html">講義版（可列印）</a>　<a href="quiz/">🎮 闖關遊戲版</a></p>',
 }
 
 
