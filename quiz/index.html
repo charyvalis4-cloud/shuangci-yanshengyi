@@ -1,31 +1,480 @@
 <!DOCTYPE html>
-<html lang="zh-Hant"><head><meta charset="utf-8">
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>雙詞衍生義闖關站（遊戲版）</title>
-<link rel="stylesheet" href="review-game.css"></head><body>
-<nav class="topnav noprint"><a href="../">← 雙詞衍生義（互動版）</a>　<a href="../shuangci-handout.docx">📄 Word 講義</a>　<a href="../shuangci-handout-color.docx">🎨 Word 講義（彩色版）</a></nav>
-<main id="app"></main>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#fdf5fa;--fg:#2d2530;--muted:#7b6f7e;--card:#fff;--bd:#efd6e5;--ac:#b5345f;--ac2:#8e2449;--ok:#dff3e6;--okb:#3a9a5c;--bad:#fbe1e1;--badb:#c94141;--star:#e6a700}
+@media (prefers-color-scheme:dark){:root{--bg:#1d171b;--fg:#f1e8ee;--muted:#b3a5ae;--card:#2a2127;--bd:#4a3843;--ac:#e0688f;--ac2:#f08aab;--ok:#1f4130;--okb:#6fd193;--bad:#4d2424;--badb:#f08a8a;--star:#ffcc33}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.65 "Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:880px;margin:0 auto;padding:16px 16px 64px}
+a{color:var(--ac)}
+.crumb{font-size:14px;color:var(--muted)}
+h1{color:var(--ac);text-align:center;font-size:clamp(1.6rem,5vw,2.3rem);margin:.5em 0 .1em}
+.lead{text-align:center;color:var(--muted);margin:0 0 1em}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin:0 0 14px}
+select,input,button{font:inherit;color:inherit}
+select,input[type=text],input[type=number]{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px 10px}
+.who{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;font-size:.95em;margin-bottom:14px}
+.who input{width:5.5em}
+.level{display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--card);border:2px solid var(--bd);border-left:10px solid var(--c,#ccc);border-radius:22px;padding:16px 20px;margin:0 0 14px;cursor:pointer;transition:transform .12s}
+.level:hover,.level:focus-visible{transform:translateY(-2px);border-color:var(--c)}
+.level .ic{font-size:2.3rem;line-height:1;width:1.3em;text-align:center}
+.level b{display:block;font-size:1.2rem}
+.level small{color:var(--muted)}
+.level .st{margin-left:auto;font-size:1.6rem;letter-spacing:2px;color:var(--star);white-space:nowrap}
+.box{background:var(--card);border:2px solid var(--bd);border-radius:22px;padding:16px 20px;margin:0 0 14px}
+.box h2{font-size:1.15rem;margin:0 0 10px}
+.box h2 small{font-weight:normal;color:var(--muted);margin-left:8px}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:9px 18px;cursor:pointer;font-weight:bold}
+.btn:hover{background:var(--ac2)}
+.btn.ghost{background:transparent;color:var(--fg);border:2px solid var(--bd);font-weight:normal}
+.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hidden{display:none!important}
+/* 作答畫面 */
+#play .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.bar{height:10px;background:var(--bd);border-radius:6px;overflow:hidden;margin:6px 0 14px}
+.bar i{display:block;height:100%;background:var(--ac);width:0;transition:width .3s}
+.qcard{background:var(--card);border:2px solid var(--bd);border-radius:22px;padding:20px}
+.qtag{display:inline-block;font-size:.85em;background:var(--bd);border-radius:8px;padding:0 8px;margin-bottom:6px}
+.ctx{font-size:.95em;background:var(--bg);border-radius:12px;padding:10px 14px;margin:0 0 10px;max-height:14em;overflow:auto;text-indent:2em}
+.stem{font-size:1.25rem;margin:.2em 0 .8em}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
+.opts.long{grid-template-columns:1fr}
+.opt{text-align:left;background:var(--bg);border:2px solid var(--bd);border-radius:14px;padding:10px 14px;cursor:pointer;font-size:1.05rem}
+.opt:hover:not(:disabled){border-color:var(--ac)}
+.opt.right{background:var(--ok);border-color:var(--okb)}
+.opt.wrong{background:var(--bad);border-color:var(--badb)}
+.fillrow{display:flex;gap:10px;flex-wrap:wrap}
+.fillrow input{font-size:1.2rem;width:10em}
+.fb{margin-top:12px;font-weight:bold;min-height:1.5em}
+.fb.ok{color:var(--okb)}.fb.no{color:var(--badb)}
+.fb .x{font-weight:normal;color:var(--fg);font-size:.95em}
+.result{text-align:center}
+.result .big{font-size:3rem;color:var(--star);letter-spacing:6px}
+.wlist{margin:10px 0 0;padding-left:1.3em}
+.wlist li{margin:.3em 0}
+/* 抽題區 */
+.chips{display:flex;flex-wrap:wrap;gap:6px 10px}
+.chips label{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.preview{max-height:24em;overflow:auto;background:var(--bg);border-radius:12px;padding:8px 14px;margin-top:10px;font-size:.95em}
+.preview ol{padding-left:1.4em;margin:.4em 0}
+/* 投影 */
+#proj{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;flex-direction:column;padding:2vh 3vw;overflow:auto}
+#proj .ph{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:1.3rem}
+#proj .pq{flex:1;display:flex;flex-direction:column;justify-content:center}
+#proj .pstem{font-size:clamp(1.8rem,4.5vw,3.6rem);font-weight:bold;margin:0 0 3vh;line-height:1.4}
+#proj .popts{display:grid;grid-template-columns:repeat(2,1fr);gap:2vh 2vw}
+#proj .popts.long{grid-template-columns:1fr}
+#proj .popts div{font-size:clamp(1.3rem,3.2vw,2.6rem);background:var(--card);border:3px solid var(--bd);border-radius:20px;padding:1.5vh 2vw}
+#proj .popts div.right{background:var(--ok);border-color:var(--okb)}
+#proj .pans{font-size:clamp(1.3rem,3vw,2.4rem);color:var(--okb);font-weight:bold;min-height:1.6em;margin-top:2vh}
+#proj .teams{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:2vh}
+#proj .team{background:var(--card);border:2px solid var(--bd);border-radius:16px;padding:6px 14px;font-size:1.3rem;display:flex;gap:8px;align-items:center}
+#proj .team b{font-size:1.8rem;min-width:1.5em;text-align:center}
+#proj .team button{font-size:1.2rem;border-radius:10px;border:1px solid var(--bd);background:var(--bg);cursor:pointer;width:2em}
+#proj .hint{color:var(--muted);font-size:1rem;text-align:center;margin-top:1vh}
+/* 列印 */
+#printArea{display:none}
+@media print{
+  body{background:#fff;color:#000}
+  main,#proj{display:none!important}
+  #printArea{display:block;font:12pt/1.7 "Microsoft JhengHei","PingFang TC",sans-serif;color:#000}
+  #printArea h1{font-size:16pt;text-align:center;color:#000}
+  #printArea .pq{break-inside:avoid;margin:0 0 10pt}
+}
+</style>
+</head>
+<body>
+<main>
+<div class="crumb"><a href="../">← 雙詞衍生義（互動版）</a>　<a href="../shuangci-handout.docx">📄 Word 講義</a>　<a href="../shuangci-handout-color.docx">🎨 Word 講義（彩色版）</a></div>
+<h1>📚 雙詞衍生義闖關站</h1>
+<p class="lead">題庫取自〈雙詞衍生義〉講義（本義、衍生義、字形），每次出題都不同</p>
+
+<div class="toolbar"><span id="loadMsg" class="crumb"></span></div>
+<div class="who" id="who">
+  <label>班級 <input id="f-cls" type="text" maxlength="8" placeholder="711" autocomplete="off"></label>
+  <label>座號 <input id="f-seat" type="text" maxlength="2" inputmode="numeric" autocomplete="off"></label>
+  <label>姓名 <input id="f-name" type="text" maxlength="10" autocomplete="off"></label>
+</div>
+
+<section id="home">
+  <div id="levels"></div>
+
+  <div class="box">
+    <h2>🧠 錯題本（<span id="wbn">0</span> 題）<small>答錯會自動收進來，連續答對 2 次才畢業</small></h2>
+    <div class="row">
+      <button class="btn" id="wbReview" type="button">複習錯題</button>
+      <button class="btn ghost" id="wbPrint" type="button">🖨️ 列印我的錯題卷</button>
+      <button class="btn ghost" id="wbDoc" type="button">⬇️ 下載錯題本（Word）</button>
+      <button class="btn ghost" id="wbClear" type="button">清空</button>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>📥 題庫抽題與下載區<small>自選範圍抽題，分「學生版／教師版」下載</small></h2>
+    <button class="btn" id="openPick" type="button">進入抽題區</button>
+    <div id="pick" class="hidden" style="margin-top:12px">
+      <div class="chips" id="pkRounds" style="display:none"></div>
+      <p style="margin:.8em 0 .2em">題型</p>
+      <div class="chips" id="pkTypes"></div>
+      <div class="row" style="margin-top:10px">
+        <label>題數 <input id="pkN" type="number" min="5" max="200" value="30" style="width:5em"></label>
+        <button class="btn" id="pkGo" type="button">抽題</button>
+        <button class="btn ghost" id="pkStu" type="button" disabled>⬇️ 學生版</button>
+        <button class="btn ghost" id="pkTea" type="button" disabled>⬇️ 教師版</button>
+        <button class="btn ghost" id="pkPrint" type="button" disabled>🖨️ 列印</button>
+      </div>
+      <div class="preview hidden" id="pkPrev"></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>📽️ 上課投影模式<small>大字、五組計分、按空白鍵揭曉</small></h2>
+    <div class="row" id="projBtns"></div>
+  </div>
+</section>
+
+<section id="play" class="hidden">
+  <div class="top"><b id="pTitle"></b><span id="pCount"></span><button class="btn ghost" id="pQuit" type="button">← 回關卡</button></div>
+  <div class="bar"><i id="pBar"></i></div>
+  <div class="qcard" id="qcard"></div>
+</section>
+
+<section id="done" class="hidden">
+  <div class="qcard result" id="doneBox"></div>
+</section>
+</main>
+
+<div id="proj" class="hidden" role="dialog" aria-label="上課投影模式">
+  <div class="ph"><b id="prTitle"></b><span id="prCount"></span><button class="btn ghost" id="prQuit" type="button">✕ 離開</button></div>
+  <div class="pq"><div class="pstem" id="prStem"></div><div class="popts" id="prOpts"></div><div class="pans" id="prAns"></div></div>
+  <div class="teams" id="prTeams"></div>
+  <div class="hint">空白鍵：揭曉／下一題　←→：上一題／下一題　+／-：調整組數</div>
+</div>
+
+<div id="printArea"></div>
+
 <script>
-const D={"W": [{"w": "跋涉", "p": [["跋", "本指在陸地上走"], ["涉", "本指在水中走"]], "k": "引申為", "d": "旅途的艱辛", "s": "旅途的艱辛", "x": "他們翻山越嶺，長途跋涉，終於抵達目的地。", "g": ["滄桑"]}, {"w": "管弦", "p": [["管", "本指管樂"], ["弦", "本指弦樂"]], "k": "引申為", "d": "音樂", "s": "音樂", "x": "音樂廳裡管弦齊奏，樂聲悠揚動聽。", "g": []}, {"w": "樞紐", "p": [["樞", "本指門戶的轉軸"], ["紐", "衣服的扣子"]], "k": "比喻", "d": "事物重要的關鍵或相互連結的中心", "s": "事物重要的關鍵或相互連結的中心", "x": "臺北車站是北臺灣重要的交通樞紐。", "g": ["基礎"]}, {"w": "紀綱", "p": [["紀", "網上的細繩"], ["綱", "網上的粗繩"]], "k": "引申為", "d": "法則", "s": "法則", "x": "國家若紀綱廢弛，社會秩序就會大亂。", "g": ["圭臬", "準繩", "規矩"]}, {"w": "規矩", "p": [["規", "畫圓的器具"], ["矩", "畫方的器具"]], "k": "引申為", "d": "法度", "s": "法度", "x": "在學校就要守規矩，不可任意妄為。", "g": ["圭臬", "準繩", "紀綱"]}, {"w": "準繩", "p": [["準", "古代量測水平的器具"], ["繩", "木匠用以取直的工具"]], "k": "引申為", "d": "權衡事物的法度", "s": "權衡事物的法度", "x": "法律是判斷是非對錯的準繩。", "g": ["圭臬", "紀綱", "規矩"]}, {"w": "圭臬", "p": [["圭", "古代測日影的器具"], ["臬", "測量日影方位的桿柱，用以計算時間"]], "k": "引申為", "d": "法度、典則", "s": "法度、典則", "x": "他把老師的教誨奉為圭臬，終身遵行不渝。", "g": ["準繩", "紀綱", "規矩"]}, {"w": "陶冶", "p": [["陶", "製造陶器"], ["冶", "將金屬鎔化倒入模型中冷卻凝固，做成各種器物"]], "k": "引申為", "d": "塑造化育", "s": "塑造化育", "x": "欣賞好的音樂，可以陶冶性情。", "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊"]}, {"w": "砥礪", "p": [["砥", "細的磨刀石"], ["礪", "粗的磨刀石"]], "k": "引申為", "d": "磨鍊", "s": "磨鍊", "x": "好朋友之間應該互相砥礪，共同進步。", "g": ["切磋", "斟酌", "淬鍊", "琢磨", "磨鍊", "針砭", "鍛鍊", "陶冶"]}, {"w": "針砭", "p": [["針", "中醫用以刺穴治病的金屬針"], ["砭", "古代用來治病的石針"]], "k": "引申為", "d": "規勸過失", "s": "規勸過失", "x": "這篇社論針砭時弊，發人深省。", "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "鍛鍊", "陶冶"]}, {"w": "切磋", "p": [["切", "指割斷、分開"], ["磋", "琢磨、磨製"]], "k": "引申為", "d": "互相研究、討論", "s": "互相研究、討論", "x": "兩位棋士在賽後互相切磋棋藝。", "g": ["斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"]}, {"w": "琢磨", "p": [["琢", "本指雕磨玉石"], ["磨", "摩擦而使物品光滑或銳利"]], "k": "引申為", "d": "對品德或文章不斷精益求精", "s": "對品德或文章不斷精益求精", "x": "寫文章要反覆琢磨字句，才能精益求精。", "g": ["切磋", "斟酌", "淬鍊", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"]}, {"w": "淬鍊", "p": [["淬", "本指打造刀劍時，將金屬燒紅後浸入水中，以增加其硬度，使其更堅利"], ["鍊", "物質去除雜質，變得精純或堅硬"]], "k": "引申為", "d": "磨鍊", "s": "磨鍊", "x": "經過嚴格訓練的淬鍊，他的球技突飛猛進。", "g": ["切磋", "斟酌", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"]}, {"w": "磨鍊", "p": [["磨", "摩擦而使物品光滑或銳利"], ["鍊", "用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬"]], "k": "引申為", "d": "鍛鍊、考驗", "s": "鍛鍊、考驗", "x": "艱苦的環境磨鍊了他堅強的意志。", "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "針砭", "鍛鍊", "陶冶"]}, {"w": "鍛鍊", "p": [["鍛", "本指將金屬放入火中燒紅，再用鐵槌槌打"], ["鍊", "用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬"]], "k": "引申為", "d": "從艱苦中養成任勞耐苦的習慣，或練習敏銳的知覺及正確的觀念", "s": "從艱苦中養成任勞耐苦的習慣，或練習敏銳的知覺及正確的觀念", "x": "他每天清晨慢跑，鍛鍊身體。", "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "陶冶"]}, {"w": "狼狽", "p": [["狼", "前二足長，後二足短的動物"], ["狽", "前二足短，後二足長，似狼的動物"]], "k": "比喻", "d": "情勢窘迫，進退兩難。亦比喻身心困頓疲乏。亦比喻彼此勾結，相倚為惡，如「狼狽為奸」", "s": "情勢窘迫，進退兩難", "x": "突然下起大雨，大家淋得一身溼，十分狼狽。", "g": ["汙穢"]}, {"w": "汙穢", "p": [["汙", "不流動的水"], ["穢", "雜草"]], "k": "引申為", "d": "骯髒、不潔", "s": "骯髒、不潔", "x": "河川被亂倒的垃圾弄得十分汙穢。", "g": ["狼狽"]}, {"w": "桑梓", "p": [["桑", "桑樹"], ["梓", "梓樹"]], "k": "引申為", "d": "故鄉、家園", "s": "故鄉、家園", "x": "遊子離鄉多年，心中始終思念著桑梓。", "g": ["喬梓", "手足", "椿萱", "琴瑟", "骨肉"]}, {"w": "枷鎖", "p": [["枷", "古時套在犯人脖子上的刑具"], ["鎖", "拴在犯人腳踝上的刑具"]], "k": "引申為", "d": "束縛、壓迫", "s": "束縛、壓迫", "x": "他終於擺脫了傳統觀念的枷鎖。", "g": ["干戈", "玉帛", "藩籬"]}, {"w": "矛盾", "p": [["矛", "古代一種直刺兵器"], ["盾", "抵禦敵人矢刃等攻擊，保護己身安全的兵器"]], "k": "引申為", "d": "言語行為自相抵觸", "s": "言語行為自相抵觸", "x": "他說要節約，卻天天亂買東西，言行實在矛盾。", "g": []}, {"w": "斟酌", "p": [["斟", "指倒酒"], ["酌", "指飲酒"]], "k": "引申為", "d": "考慮可否而決定取捨", "s": "考慮可否而決定取捨", "x": "這件事關係重大，請你再三斟酌後再決定。", "g": ["切磋", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"]}, {"w": "干戈", "p": [["干", "本指阻擋刀劍、護衛身軀的盾牌"], ["戈", "長柄橫刀的平頭戟（戟：ㄐㄧˇ）"]], "k": "引申為", "d": "武器、兵事、戰亂", "s": "武器、兵事、戰亂", "x": "戰火連年，干戈不息，百姓流離失所。", "g": ["枷鎖", "玉帛", "藩籬"]}, {"w": "玉帛", "p": [["玉", "本指玉器"], ["帛", "本指絲織品"]], "k": "引申為", "d": "財物、和平", "s": "財物、和平", "x": "兩國領袖握手言和，化干戈為玉帛。", "g": ["干戈", "枷鎖", "藩籬"]}, {"w": "藩籬", "p": [["藩", "本指籬笆"], ["籬", "本指籬笆"]], "k": "引申為", "d": "保護防衛、範圍、邊界", "s": "保護防衛、範圍、邊界", "x": "網路的發達，打破了人與人之間的藩籬。", "g": ["干戈", "枷鎖", "玉帛"]}, {"w": "琴瑟", "p": [["琴", "本指樂器名"], ["瑟", "本指樂器名"]], "k": "引申為", "d": "夫妻感情融洽", "s": "夫妻感情融洽", "x": "這對夫妻琴瑟和鳴，相處融洽。", "g": ["喬梓", "手足", "桑梓", "椿萱", "骨肉"]}, {"w": "骨肉", "p": [["骨", "本指骨頭"], ["肉", "本指肉"]], "k": "引申為", "d": "至親", "s": "至親", "x": "兄弟姊妹是骨肉至親，理應互相扶持。", "g": ["喬梓", "手足", "桑梓", "椿萱", "琴瑟"]}, {"w": "手足", "p": [["手", "本指手"], ["足", "本指腳"]], "k": "引申為", "d": "同胞兄弟", "s": "同胞兄弟", "x": "他和弟弟手足情深，從不吵架。", "g": ["喬梓", "桑梓", "椿萱", "琴瑟", "骨肉"]}, {"w": "椿萱", "p": [["椿", "本指香椿"], ["萱", "本指萱草"]], "k": "引申為", "d": "父母", "s": "父母", "x": "每逢過年，他都帶著全家回鄉探望椿萱。", "g": ["喬梓", "手足", "桑梓", "琴瑟", "骨肉"]}, {"w": "喬梓", "p": [["喬", "本指喬木"], ["梓", "本指梓木"]], "k": "引申為", "d": "父子", "s": "父子", "x": "這對喬梓同台演出，傳為藝壇佳話。", "g": ["手足", "桑梓", "椿萱", "琴瑟", "骨肉"]}, {"w": "眉睫", "p": [["眉", "本指眉毛"], ["睫", "本指睫毛"]], "k": "引申為", "d": "緊迫", "s": "緊迫", "x": "考試迫在眉睫，他卻還在玩遊戲。", "g": []}, {"w": "基礎", "p": [["基", "本指房屋的基址"], ["礎", "本指房屋柱腳的礎石"]], "k": "引申為", "d": "事物的根本", "s": "事物的根本", "x": "學好國字，是閱讀與寫作的基礎。", "g": ["樞紐"]}, {"w": "滄桑", "p": [["滄", "本指滄海"], ["桑", "本指桑田"]], "k": "引申為", "d": "世事變化無常", "s": "世事變化無常", "x": "老人歷盡滄桑，臉上刻滿歲月的痕跡。", "g": ["跋涉"]}], "CLUE": {"規矩": "一字指畫圓的器具，另一字指畫方的器具。這個詞語是：", "斟酌": "一字指倒酒，另一字指飲酒。這個詞語是：", "桑梓": "一字指桑樹，另一字指梓樹。這個詞語是：", "矛盾": "一字指古代直刺的兵器，另一字指抵禦攻擊、保護自身的兵器。這個詞語是：", "狼狽": "一字指前二足長、後二足短的動物，另一字指前二足短、後二足長，似狼的動物。這個詞語是：", "枷鎖": "一字指套在犯人脖子上的刑具，另一字指拴在犯人腳踝上的刑具。這個詞語是：", "圭臬": "一字指古代測日影的器具，另一字指測量日影方位的桿柱。這個詞語是：", "砥礪": "一字指細的磨刀石，另一字指粗的磨刀石。這個詞語是：", "滄桑": "一字指滄海，另一字指桑田。這個詞語是：", "基礎": "一字指房屋的基址，另一字指房屋柱腳的礎石。這個詞語是：", "管弦": "一字本指管樂，另一字本指弦樂。這個詞語是：", "紀綱": "一字指網上的細繩，另一字指網上的粗繩。這個詞語是：", "跋涉": "一字本指在陸地上走，另一字本指在水中走。這個詞語是：", "樞紐": "一字本指門戶的轉軸，另一字衣服的扣子。這個詞語是：", "準繩": "一字古代量測水平的器具，另一字木匠用以取直的工具。這個詞語是：", "陶冶": "一字製造陶器，另一字將金屬鎔化倒入模型中冷卻凝固，做成各種器物。這個詞語是：", "針砭": "一字中醫用以刺穴治病的金屬針，另一字古代用來治病的石針。這個詞語是：", "切磋": "一字指割斷、分開，另一字琢磨、磨製。這個詞語是：", "琢磨": "一字本指雕磨玉石，另一字摩擦而使物品光滑或銳利。這個詞語是：", "淬鍊": "一字本指打造刀劍時，將金屬燒紅後浸入水中，以增加其硬度，使其更堅利，另一字物質去除雜質，變得精純或堅硬。這個詞語是：", "磨鍊": "一字摩擦而使物品光滑或銳利，另一字用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬。這個詞語是：", "鍛鍊": "一字本指將金屬放入火中燒紅，再用鐵槌槌打，另一字用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬。這個詞語是：", "汙穢": "一字不流動的水，另一字雜草。這個詞語是：", "干戈": "一字本指阻擋刀劍、護衛身軀的盾牌，另一字長柄橫刀的平頭戟（戟：ㄐㄧˇ）。這個詞語是：", "玉帛": "一字本指玉器，另一字本指絲織品。這個詞語是：", "藩籬": "一字本指籬笆，另一字本指籬笆。這個詞語是：", "琴瑟": "一字本指樂器名，另一字本指樂器名。這個詞語是：", "骨肉": "一字本指骨頭，另一字本指肉。這個詞語是：", "手足": "一字本指手，另一字本指腳。這個詞語是：", "椿萱": "一字本指香椿，另一字本指萱草。這個詞語是：", "喬梓": "一字本指喬木，另一字本指梓木。這個詞語是：", "眉睫": "一字本指眉毛，另一字本指睫毛。這個詞語是："}, "GL": [{"w": "跋涉", "q": "「ㄅㄚˊ」涉", "a": "跋", "o": ["拔", "跛", "趺"]}, {"w": "樞紐", "q": "樞「ㄋㄧㄡˇ」", "a": "紐", "o": ["鈕", "扭", "忸"]}, {"w": "圭臬", "q": "圭「ㄋㄧㄝˋ」", "a": "臬", "o": ["梟", "臭", "皋"]}, {"w": "砥礪", "q": "「ㄉㄧˇ」礪", "a": "砥", "o": ["低", "抵", "底"]}, {"w": "針砭", "q": "針「ㄅㄧㄢ」", "a": "砭", "o": ["貶", "泛", "眨"]}, {"w": "狼狽", "q": "狼「ㄅㄟˋ」", "a": "狽", "o": ["貝", "唄", "背"]}, {"w": "桑梓", "q": "桑「ㄗˇ」", "a": "梓", "o": ["滓", "宰", "仔"]}, {"w": "斟酌", "q": "「ㄓㄣ」酌", "a": "斟", "o": ["甚", "堪", "湛"]}, {"w": "藩籬", "q": "藩「ㄌㄧˊ」", "a": "籬", "o": ["離", "璃", "縭"]}, {"w": "眉睫", "q": "眉「ㄐㄧㄝˊ」", "a": "睫", "o": ["捷", "婕", "楫"]}, {"w": "琢磨", "q": "「ㄓㄨㄛˊ」磨", "a": "琢", "o": ["啄", "涿", "逐"]}, {"w": "淬鍊", "q": "「ㄘㄨㄟˋ」鍊", "a": "淬", "o": ["碎", "猝", "粹"]}, {"w": "枷鎖", "q": "「ㄐㄧㄚ」鎖", "a": "枷", "o": ["架", "嘉", "痂"]}, {"w": "藩籬", "q": "「ㄈㄢ」籬", "a": "藩", "o": ["潘", "番", "翻"]}, {"w": "椿萱", "q": "「ㄔㄨㄣ」萱", "a": "椿", "o": ["春", "蠢", "純"]}, {"w": "椿萱", "q": "椿「ㄒㄩㄢ」", "a": "萱", "o": ["喧", "宣", "渲"]}, {"w": "基礎", "q": "基「ㄔㄨˇ」", "a": "礎", "o": ["楚", "處", "儲"]}, {"w": "滄桑", "q": "「ㄘㄤ」桑", "a": "滄", "o": ["蒼", "倉", "艙"]}, {"w": "汙穢", "q": "汙「ㄏㄨㄟˋ」", "a": "穢", "o": ["歲", "噦", "濊"]}, {"w": "矛盾", "q": "矛「ㄉㄨㄣˋ」", "a": "盾", "o": ["遁", "頓", "鈍"]}], "MCQ": [{"s": "「跋涉」一詞，「跋」與「涉」的本義分別是：", "c": "在陸地上走、在水中走", "w": ["在水中走、在陸地上走", "都是在陸地上走", "都是在水中走"], "x": "跋：本指在陸地上走；涉：本指在水中走。"}, {"s": "下列哪一個詞語，引申為「音樂」？", "c": "管弦", "w": ["樞紐", "紀綱", "斟酌"], "x": "管：管樂；弦：弦樂；合稱引申為音樂。"}, {"s": "「樞紐」比喻的是：", "c": "事物重要的關鍵或相互連結的中心", "w": ["旅途的艱辛", "法度", "故鄉、家園"], "x": "樞：門戶的轉軸；紐：衣服的扣子。"}, {"s": "下列哪一組詞語，都可以引申為「法度、準則」？", "c": "規矩、準繩", "w": ["狼狽、汙穢", "骨肉、手足", "桑梓、枷鎖"], "x": "規矩、準繩、紀綱、圭臬都與法度、準則有關。"}, {"s": "「紀綱」的「紀」與「綱」，本義分別指：", "c": "網上的細繩、網上的粗繩", "w": ["細的磨刀石、粗的磨刀石", "畫圓的器具、畫方的器具", "前二足長的動物、前二足短的動物"], "x": "紀：網上的細繩；綱：網上的粗繩。"}, {"s": "「砥礪」的「砥」與「礪」，本義分別指：", "c": "細的磨刀石、粗的磨刀石", "w": ["粗的磨刀石、細的磨刀石", "古時套在脖子上、拴在腳踝上的刑具", "古代測日影的器具、測量日影方位的桿柱"], "x": "砥：細的磨刀石；礪：粗的磨刀石。"}, {"s": "下列哪一個詞語，與「砥礪」的引申義（磨鍊）相近？", "c": "淬鍊", "w": ["汙穢", "干戈", "藩籬"], "x": "砥礪、淬鍊都引申為磨鍊。"}, {"s": "「狼狽」比喻的是：", "c": "情勢窘迫，進退兩難", "w": ["言語行為自相抵觸", "考慮可否而決定取捨", "世事變化無常"], "x": "狼：前二足長；狽：前二足短，後二足長。狼狽也可比喻彼此勾結，如「狼狽為奸」。"}, {"s": "「汙穢」的「汙」與「穢」，本義分別指：", "c": "不流動的水、雜草", "w": ["桑樹、梓樹", "枷、鎖", "香椿、萱草"], "x": "汙：不流動的水；穢：雜草；引申為骯髒、不潔。"}, {"s": "「桑梓」引申為：", "c": "故鄉、家園", "w": ["父母", "父子", "同胞兄弟"], "x": "桑：桑樹；梓：梓樹；古人常在家宅旁種植桑樹和梓樹。"}, {"s": "下列哪一個詞語，引申為「財物、和平」？", "c": "玉帛", "w": ["干戈", "藩籬", "枷鎖"], "x": "玉：玉器；帛：絲織品。與「干戈」（武器、戰亂）相對。"}, {"s": "「干戈」引申為：", "c": "武器、兵事、戰亂", "w": ["財物、和平", "保護防衛、範圍、邊界", "束縛、壓迫"], "x": "干：盾牌；戈：長柄橫刀的平頭戟。"}, {"s": "下列哪一個詞語，引申為「父母」？", "c": "椿萱", "w": ["喬梓", "手足", "骨肉"], "x": "椿：香椿；萱：萱草。喬梓稱父子，手足稱同胞兄弟，骨肉稱至親。"}, {"s": "「眉睫」引申為：", "c": "緊迫", "w": ["故鄉", "法度", "音樂"], "x": "眉：眉毛；睫：睫毛。兩者距離極近，引申為緊迫，如「迫在眉睫」。"}]};
-
-const {esc,sh,pick}=GameUtil;
-const WM=Object.fromEntries(D.W.map(x=>[x.w,x]));
-const ex=w=>{const x=WM[w];return '<b>'+esc(w)+'</b>：'+x.p.map(p=>esc(p[0])+'，'+esc(p[1])).join('；')+'。'+esc(x.k)+'「'+esc(x.d.split('。')[0])+'」。'};
-const others=w=>D.W.filter(x=>x.w!==w&&!WM[w].g.includes(x.w));
-const mk=(s,a,wr,e,fx)=>{const o=sh([a,...wr]);return {s,o,a,e}};
-const qGlyph=g=>mk('請選出符合注音的正確字形：<b>'+esc(g.q)+'</b>',g.a,g.o,ex(g.w));
-const qClue=w=>mk(esc(D.CLUE[w]),w,pick(others(w),3).map(x=>x.w),ex(w));
-const qMean=w=>{const x=WM[w],seen=new Set([x.s]),wr=[];sh(others(w)).forEach(y=>{if(wr.length<3&&!seen.has(y.s)){seen.add(y.s);wr.push(y.s)}});return mk('「<b>'+esc(w)+'</b>」的衍生義（引申義）是：',x.s,wr,ex(w))};
-const qCloze=w=>mk(esc(WM[w].x.replace(w,'＿＿'))+'<br><small>選出最適合填入的詞語：</small>',w,pick(others(w),3).map(x=>x.w),ex(w));
-const qRev=w=>{const x=WM[w];return mk('下列哪一個詞語，引申為「<b>'+esc(x.s)+'</b>」？',w,pick(others(w).filter(y=>y.s!==x.s),3).map(y=>y.w),ex(w))};
-const qMc=m=>mk(esc(m.s),m.c,m.w,esc(m.x));
-const ws=D.W.map(x=>x.w);
-const P={1:()=>D.GL.map(qGlyph),2:()=>ws.map(qClue),3:()=>ws.map(qMean),4:()=>ws.map(qCloze),5:()=>[...ws.map(qRev),...D.MCQ.map(qMc)]};
-window.GAME={pfx:"shuangci_game",home:"📚 雙詞衍生義闖關站",sub:"雙詞・本義與衍生義（題庫取自〈雙詞衍生義〉講義，每次出題都不同）",title:"雙詞衍生義",quiz:"雙詞衍生義・闖關",win:"太強了！雙詞衍生義難不倒你 🎉",hint:"💡 看提示",
- levels:[{k:1,n:"關卡一",t:"字形大對決",e:"🔍",c:"#e8590c"},{k:2,n:"關卡二",t:"本義線索・猜猜我是誰",e:"🧩",c:"#1c7ed6"},{k:3,n:"關卡三",t:"衍生義大挑戰",e:"🎯",c:"#2f9e44"},{k:4,n:"偵探關",t:"例句填空",e:"🕵️",c:"#2b6f87"},{k:5,n:"挑戰關",t:"反向思考・綜合題",e:"🎲",c:"#c8512b"},{k:6,n:"Boss 關",t:"雙詞總決戰",e:"👑",c:"#9c36b5"}],
- gen(k,n){let pool;if(k==6){pool=[];[1,2,3,4,5].forEach(j=>pool.push(...P[j]()))}else pool=P[k]();return pick(pool,n)}};
-
+var DATA = {"n": 1, "idioms": [{"w": "跋涉", "s": "旅途的艱辛", "d": "旅途的艱辛", "k": "引申為", "e": "他們翻山越嶺，長途跋涉，終於抵達目的地。", "p": [["跋", "本指在陸地上走"], ["涉", "本指在水中走"]], "g": ["滄桑"], "clue": "一字本指在陸地上走，另一字本指在水中走。這個詞語是："}, {"w": "管弦", "s": "音樂", "d": "音樂", "k": "引申為", "e": "音樂廳裡管弦齊奏，樂聲悠揚動聽。", "p": [["管", "本指管樂"], ["弦", "本指弦樂"]], "g": [], "clue": "一字本指管樂，另一字本指弦樂。這個詞語是："}, {"w": "樞紐", "s": "事物重要的關鍵或相互連結的中心", "d": "事物重要的關鍵或相互連結的中心", "k": "比喻", "e": "臺北車站是北臺灣重要的交通樞紐。", "p": [["樞", "本指門戶的轉軸"], ["紐", "衣服的扣子"]], "g": ["基礎"], "clue": "一字本指門戶的轉軸，另一字衣服的扣子。這個詞語是："}, {"w": "紀綱", "s": "法則", "d": "法則", "k": "引申為", "e": "國家若紀綱廢弛，社會秩序就會大亂。", "p": [["紀", "網上的細繩"], ["綱", "網上的粗繩"]], "g": ["圭臬", "準繩", "規矩"], "clue": "一字指網上的細繩，另一字指網上的粗繩。這個詞語是："}, {"w": "規矩", "s": "法度", "d": "法度", "k": "引申為", "e": "在學校就要守規矩，不可任意妄為。", "p": [["規", "畫圓的器具"], ["矩", "畫方的器具"]], "g": ["圭臬", "準繩", "紀綱"], "clue": "一字指畫圓的器具，另一字指畫方的器具。這個詞語是："}, {"w": "準繩", "s": "權衡事物的法度", "d": "權衡事物的法度", "k": "引申為", "e": "法律是判斷是非對錯的準繩。", "p": [["準", "古代量測水平的器具"], ["繩", "木匠用以取直的工具"]], "g": ["圭臬", "紀綱", "規矩"], "clue": "一字古代量測水平的器具，另一字木匠用以取直的工具。這個詞語是："}, {"w": "圭臬", "s": "法度、典則", "d": "法度、典則", "k": "引申為", "e": "他把老師的教誨奉為圭臬，終身遵行不渝。", "p": [["圭", "古代測日影的器具"], ["臬", "測量日影方位的桿柱，用以計算時間"]], "g": ["準繩", "紀綱", "規矩"], "clue": "一字指古代測日影的器具，另一字指測量日影方位的桿柱。這個詞語是："}, {"w": "陶冶", "s": "塑造化育", "d": "塑造化育", "k": "引申為", "e": "欣賞好的音樂，可以陶冶性情。", "p": [["陶", "製造陶器"], ["冶", "將金屬鎔化倒入模型中冷卻凝固，做成各種器物"]], "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊"], "clue": "一字製造陶器，另一字將金屬鎔化倒入模型中冷卻凝固，做成各種器物。這個詞語是："}, {"w": "砥礪", "s": "磨鍊", "d": "磨鍊", "k": "引申為", "e": "好朋友之間應該互相砥礪，共同進步。", "p": [["砥", "細的磨刀石"], ["礪", "粗的磨刀石"]], "g": ["切磋", "斟酌", "淬鍊", "琢磨", "磨鍊", "針砭", "鍛鍊", "陶冶"], "clue": "一字指細的磨刀石，另一字指粗的磨刀石。這個詞語是："}, {"w": "針砭", "s": "規勸過失", "d": "規勸過失", "k": "引申為", "e": "這篇社論針砭時弊，發人深省。", "p": [["針", "中醫用以刺穴治病的金屬針"], ["砭", "古代用來治病的石針"]], "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "鍛鍊", "陶冶"], "clue": "一字中醫用以刺穴治病的金屬針，另一字古代用來治病的石針。這個詞語是："}, {"w": "切磋", "s": "互相研究、討論", "d": "互相研究、討論", "k": "引申為", "e": "兩位棋士在賽後互相切磋棋藝。", "p": [["切", "指割斷、分開"], ["磋", "琢磨、磨製"]], "g": ["斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"], "clue": "一字指割斷、分開，另一字琢磨、磨製。這個詞語是："}, {"w": "琢磨", "s": "對品德或文章不斷精益求精", "d": "對品德或文章不斷精益求精", "k": "引申為", "e": "寫文章要反覆琢磨字句，才能精益求精。", "p": [["琢", "本指雕磨玉石"], ["磨", "摩擦而使物品光滑或銳利"]], "g": ["切磋", "斟酌", "淬鍊", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"], "clue": "一字本指雕磨玉石，另一字摩擦而使物品光滑或銳利。這個詞語是："}, {"w": "淬鍊", "s": "磨鍊", "d": "磨鍊", "k": "引申為", "e": "經過嚴格訓練的淬鍊，他的球技突飛猛進。", "p": [["淬", "本指打造刀劍時，將金屬燒紅後浸入水中，以增加其硬度，使其更堅利"], ["鍊", "物質去除雜質，變得精純或堅硬"]], "g": ["切磋", "斟酌", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"], "clue": "一字本指打造刀劍時，將金屬燒紅後浸入水中，以增加其硬度，使其更堅利，另一字物質去除雜質，變得精純或堅硬。這個詞語是："}, {"w": "磨鍊", "s": "鍛鍊、考驗", "d": "鍛鍊、考驗", "k": "引申為", "e": "艱苦的環境磨鍊了他堅強的意志。", "p": [["磨", "摩擦而使物品光滑或銳利"], ["鍊", "用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬"]], "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "針砭", "鍛鍊", "陶冶"], "clue": "一字摩擦而使物品光滑或銳利，另一字用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬。這個詞語是："}, {"w": "鍛鍊", "s": "從艱苦中養成任勞耐苦的習慣，或練習敏銳的知覺及正確的觀念", "d": "從艱苦中養成任勞耐苦的習慣，或練習敏銳的知覺及正確的觀念", "k": "引申為", "e": "他每天清晨慢跑，鍛鍊身體。", "p": [["鍛", "本指將金屬放入火中燒紅，再用鐵槌槌打"], ["鍊", "用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬"]], "g": ["切磋", "斟酌", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "陶冶"], "clue": "一字本指將金屬放入火中燒紅，再用鐵槌槌打，另一字用火燒烤或高溫加熱等方法，使物質去除雜質，變得精純或堅硬。這個詞語是："}, {"w": "狼狽", "s": "情勢窘迫，進退兩難", "d": "情勢窘迫，進退兩難。亦比喻身心困頓疲乏。亦比喻彼此勾結，相倚為惡，如「狼狽為奸」", "k": "比喻", "e": "突然下起大雨，大家淋得一身溼，十分狼狽。", "p": [["狼", "前二足長，後二足短的動物"], ["狽", "前二足短，後二足長，似狼的動物"]], "g": ["汙穢"], "clue": "一字指前二足長、後二足短的動物，另一字指前二足短、後二足長，似狼的動物。這個詞語是："}, {"w": "汙穢", "s": "骯髒、不潔", "d": "骯髒、不潔", "k": "引申為", "e": "河川被亂倒的垃圾弄得十分汙穢。", "p": [["汙", "不流動的水"], ["穢", "雜草"]], "g": ["狼狽"], "clue": "一字不流動的水，另一字雜草。這個詞語是："}, {"w": "桑梓", "s": "故鄉、家園", "d": "故鄉、家園", "k": "引申為", "e": "遊子離鄉多年，心中始終思念著桑梓。", "p": [["桑", "桑樹"], ["梓", "梓樹"]], "g": ["喬梓", "手足", "椿萱", "琴瑟", "骨肉"], "clue": "一字指桑樹，另一字指梓樹。這個詞語是："}, {"w": "枷鎖", "s": "束縛、壓迫", "d": "束縛、壓迫", "k": "引申為", "e": "他終於擺脫了傳統觀念的枷鎖。", "p": [["枷", "古時套在犯人脖子上的刑具"], ["鎖", "拴在犯人腳踝上的刑具"]], "g": ["干戈", "玉帛", "藩籬"], "clue": "一字指套在犯人脖子上的刑具，另一字指拴在犯人腳踝上的刑具。這個詞語是："}, {"w": "矛盾", "s": "言語行為自相抵觸", "d": "言語行為自相抵觸", "k": "引申為", "e": "他說要節約，卻天天亂買東西，言行實在矛盾。", "p": [["矛", "古代一種直刺兵器"], ["盾", "抵禦敵人矢刃等攻擊，保護己身安全的兵器"]], "g": [], "clue": "一字指古代直刺的兵器，另一字指抵禦攻擊、保護自身的兵器。這個詞語是："}, {"w": "斟酌", "s": "考慮可否而決定取捨", "d": "考慮可否而決定取捨", "k": "引申為", "e": "這件事關係重大，請你再三斟酌後再決定。", "p": [["斟", "指倒酒"], ["酌", "指飲酒"]], "g": ["切磋", "淬鍊", "琢磨", "砥礪", "磨鍊", "針砭", "鍛鍊", "陶冶"], "clue": "一字指倒酒，另一字指飲酒。這個詞語是："}, {"w": "干戈", "s": "武器、兵事、戰亂", "d": "武器、兵事、戰亂", "k": "引申為", "e": "戰火連年，干戈不息，百姓流離失所。", "p": [["干", "本指阻擋刀劍、護衛身軀的盾牌"], ["戈", "長柄橫刀的平頭戟（戟：ㄐㄧˇ）"]], "g": ["枷鎖", "玉帛", "藩籬"], "clue": "一字本指阻擋刀劍、護衛身軀的盾牌，另一字長柄橫刀的平頭戟（戟：ㄐㄧˇ）。這個詞語是："}, {"w": "玉帛", "s": "財物、和平", "d": "財物、和平", "k": "引申為", "e": "兩國領袖握手言和，化干戈為玉帛。", "p": [["玉", "本指玉器"], ["帛", "本指絲織品"]], "g": ["干戈", "枷鎖", "藩籬"], "clue": "一字本指玉器，另一字本指絲織品。這個詞語是："}, {"w": "藩籬", "s": "保護防衛、範圍、邊界", "d": "保護防衛、範圍、邊界", "k": "引申為", "e": "網路的發達，打破了人與人之間的藩籬。", "p": [["藩", "本指籬笆"], ["籬", "本指籬笆"]], "g": ["干戈", "枷鎖", "玉帛"], "clue": "一字本指籬笆，另一字本指籬笆。這個詞語是："}, {"w": "琴瑟", "s": "夫妻感情融洽", "d": "夫妻感情融洽", "k": "引申為", "e": "這對夫妻琴瑟和鳴，相處融洽。", "p": [["琴", "本指樂器名"], ["瑟", "本指樂器名"]], "g": ["喬梓", "手足", "桑梓", "椿萱", "骨肉"], "clue": "一字本指樂器名，另一字本指樂器名。這個詞語是："}, {"w": "骨肉", "s": "至親", "d": "至親", "k": "引申為", "e": "兄弟姊妹是骨肉至親，理應互相扶持。", "p": [["骨", "本指骨頭"], ["肉", "本指肉"]], "g": ["喬梓", "手足", "桑梓", "椿萱", "琴瑟"], "clue": "一字本指骨頭，另一字本指肉。這個詞語是："}, {"w": "手足", "s": "同胞兄弟", "d": "同胞兄弟", "k": "引申為", "e": "他和弟弟手足情深，從不吵架。", "p": [["手", "本指手"], ["足", "本指腳"]], "g": ["喬梓", "桑梓", "椿萱", "琴瑟", "骨肉"], "clue": "一字本指手，另一字本指腳。這個詞語是："}, {"w": "椿萱", "s": "父母", "d": "父母", "k": "引申為", "e": "每逢過年，他都帶著全家回鄉探望椿萱。", "p": [["椿", "本指香椿"], ["萱", "本指萱草"]], "g": ["喬梓", "手足", "桑梓", "琴瑟", "骨肉"], "clue": "一字本指香椿，另一字本指萱草。這個詞語是："}, {"w": "喬梓", "s": "父子", "d": "父子", "k": "引申為", "e": "這對喬梓同台演出，傳為藝壇佳話。", "p": [["喬", "本指喬木"], ["梓", "本指梓木"]], "g": ["手足", "桑梓", "椿萱", "琴瑟", "骨肉"], "clue": "一字本指喬木，另一字本指梓木。這個詞語是："}, {"w": "眉睫", "s": "緊迫", "d": "緊迫", "k": "引申為", "e": "考試迫在眉睫，他卻還在玩遊戲。", "p": [["眉", "本指眉毛"], ["睫", "本指睫毛"]], "g": [], "clue": "一字本指眉毛，另一字本指睫毛。這個詞語是："}, {"w": "基礎", "s": "事物的根本", "d": "事物的根本", "k": "引申為", "e": "學好國字，是閱讀與寫作的基礎。", "p": [["基", "本指房屋的基址"], ["礎", "本指房屋柱腳的礎石"]], "g": ["樞紐"], "clue": "一字指房屋的基址，另一字指房屋柱腳的礎石。這個詞語是："}, {"w": "滄桑", "s": "世事變化無常", "d": "世事變化無常", "k": "引申為", "e": "老人歷盡滄桑，臉上刻滿歲月的痕跡。", "p": [["滄", "本指滄海"], ["桑", "本指桑田"]], "g": ["跋涉"], "clue": "一字指滄海，另一字指桑田。這個詞語是："}], "glyph": [{"w": "跋涉", "q": "「ㄅㄚˊ」涉", "a": "跋", "o": ["拔", "跛", "趺"]}, {"w": "樞紐", "q": "樞「ㄋㄧㄡˇ」", "a": "紐", "o": ["鈕", "扭", "忸"]}, {"w": "圭臬", "q": "圭「ㄋㄧㄝˋ」", "a": "臬", "o": ["梟", "臭", "皋"]}, {"w": "砥礪", "q": "「ㄉㄧˇ」礪", "a": "砥", "o": ["低", "抵", "底"]}, {"w": "針砭", "q": "針「ㄅㄧㄢ」", "a": "砭", "o": ["貶", "泛", "眨"]}, {"w": "狼狽", "q": "狼「ㄅㄟˋ」", "a": "狽", "o": ["貝", "唄", "背"]}, {"w": "桑梓", "q": "桑「ㄗˇ」", "a": "梓", "o": ["滓", "宰", "仔"]}, {"w": "斟酌", "q": "「ㄓㄣ」酌", "a": "斟", "o": ["甚", "堪", "湛"]}, {"w": "藩籬", "q": "藩「ㄌㄧˊ」", "a": "籬", "o": ["離", "璃", "縭"]}, {"w": "眉睫", "q": "眉「ㄐㄧㄝˊ」", "a": "睫", "o": ["捷", "婕", "楫"]}, {"w": "琢磨", "q": "「ㄓㄨㄛˊ」磨", "a": "琢", "o": ["啄", "涿", "逐"]}, {"w": "淬鍊", "q": "「ㄘㄨㄟˋ」鍊", "a": "淬", "o": ["碎", "猝", "粹"]}, {"w": "枷鎖", "q": "「ㄐㄧㄚ」鎖", "a": "枷", "o": ["架", "嘉", "痂"]}, {"w": "藩籬", "q": "「ㄈㄢ」籬", "a": "藩", "o": ["潘", "番", "翻"]}, {"w": "椿萱", "q": "「ㄔㄨㄣ」萱", "a": "椿", "o": ["春", "蠢", "純"]}, {"w": "椿萱", "q": "椿「ㄒㄩㄢ」", "a": "萱", "o": ["喧", "宣", "渲"]}, {"w": "基礎", "q": "基「ㄔㄨˇ」", "a": "礎", "o": ["楚", "處", "儲"]}, {"w": "滄桑", "q": "「ㄘㄤ」桑", "a": "滄", "o": ["蒼", "倉", "艙"]}, {"w": "汙穢", "q": "汙「ㄏㄨㄟˋ」", "a": "穢", "o": ["歲", "噦", "濊"]}, {"w": "矛盾", "q": "矛「ㄉㄨㄣˋ」", "a": "盾", "o": ["遁", "頓", "鈍"]}], "mc": [{"s": "「跋涉」一詞，「跋」與「涉」的本義分別是：", "c": "在陸地上走、在水中走", "w": ["在水中走、在陸地上走", "都是在陸地上走", "都是在水中走"], "x": "跋：本指在陸地上走；涉：本指在水中走。"}, {"s": "下列哪一個詞語，引申為「音樂」？", "c": "管弦", "w": ["樞紐", "紀綱", "斟酌"], "x": "管：管樂；弦：弦樂；合稱引申為音樂。"}, {"s": "「樞紐」比喻的是：", "c": "事物重要的關鍵或相互連結的中心", "w": ["旅途的艱辛", "法度", "故鄉、家園"], "x": "樞：門戶的轉軸；紐：衣服的扣子。"}, {"s": "下列哪一組詞語，都可以引申為「法度、準則」？", "c": "規矩、準繩", "w": ["狼狽、汙穢", "骨肉、手足", "桑梓、枷鎖"], "x": "規矩、準繩、紀綱、圭臬都與法度、準則有關。"}, {"s": "「紀綱」的「紀」與「綱」，本義分別指：", "c": "網上的細繩、網上的粗繩", "w": ["細的磨刀石、粗的磨刀石", "畫圓的器具、畫方的器具", "前二足長的動物、前二足短的動物"], "x": "紀：網上的細繩；綱：網上的粗繩。"}, {"s": "「砥礪」的「砥」與「礪」，本義分別指：", "c": "細的磨刀石、粗的磨刀石", "w": ["粗的磨刀石、細的磨刀石", "古時套在脖子上、拴在腳踝上的刑具", "古代測日影的器具、測量日影方位的桿柱"], "x": "砥：細的磨刀石；礪：粗的磨刀石。"}, {"s": "下列哪一個詞語，與「砥礪」的引申義（磨鍊）相近？", "c": "淬鍊", "w": ["汙穢", "干戈", "藩籬"], "x": "砥礪、淬鍊都引申為磨鍊。"}, {"s": "「狼狽」比喻的是：", "c": "情勢窘迫，進退兩難", "w": ["言語行為自相抵觸", "考慮可否而決定取捨", "世事變化無常"], "x": "狼：前二足長；狽：前二足短，後二足長。狼狽也可比喻彼此勾結，如「狼狽為奸」。"}, {"s": "「汙穢」的「汙」與「穢」，本義分別指：", "c": "不流動的水、雜草", "w": ["桑樹、梓樹", "枷、鎖", "香椿、萱草"], "x": "汙：不流動的水；穢：雜草；引申為骯髒、不潔。"}, {"s": "「桑梓」引申為：", "c": "故鄉、家園", "w": ["父母", "父子", "同胞兄弟"], "x": "桑：桑樹；梓：梓樹；古人常在家宅旁種植桑樹和梓樹。"}, {"s": "下列哪一個詞語，引申為「財物、和平」？", "c": "玉帛", "w": ["干戈", "藩籬", "枷鎖"], "x": "玉：玉器；帛：絲織品。與「干戈」（武器、戰亂）相對。"}, {"s": "「干戈」引申為：", "c": "武器、兵事、戰亂", "w": ["財物、和平", "保護防衛、範圍、邊界", "束縛、壓迫"], "x": "干：盾牌；戈：長柄橫刀的平頭戟。"}, {"s": "下列哪一個詞語，引申為「父母」？", "c": "椿萱", "w": ["喬梓", "手足", "骨肉"], "x": "椿：香椿；萱：萱草。喬梓稱父子，手足稱同胞兄弟，骨肉稱至親。"}, {"s": "「眉睫」引申為：", "c": "緊迫", "w": ["故鄉", "法度", "音樂"], "x": "眉：眉毛；睫：睫毛。兩者距離極近，引申為緊迫，如「迫在眉睫」。"}]};
 </script>
-<script src="review-game.js"></script>
-</body></html>
+<script>
+(function () {
+  'use strict';
+  var ROUNDS = 1, PER = 10;
+  var CN = '零一二三四五六七八九十';
+  function cnum(n) { return n <= 10 ? CN[n] : n < 20 ? '十' + CN[n - 10] : CN[Math.floor(n / 10)] + '十' + (n % 10 ? CN[n % 10] : ''); }
+  var L = 'ABCDEFGH';
+  var LEVELS = [
+    { id: 'def', ic: '🔍', c: '#e0662f', name: '關卡一：衍生義配對', short: '關卡一' },
+    { id: 'ex', ic: '✏️', c: '#3d7bd6', name: '關卡二：例句填空', short: '關卡二' },
+    { id: 'clue', ic: '🧩', c: '#4a9c4f', name: '關卡三：本義線索', short: '關卡三' },
+    { id: 'char', ic: '🕵️', c: '#2f6f80', name: '偵探關：字形偵探', short: '偵探關' },
+    { id: 'hand', ic: '🎲', c: '#d0532a', name: '挑戰關：反向思考・綜合題', short: '挑戰關' },
+    { id: 'boss', ic: '👑', c: '#8e3fb3', name: 'Boss 關：雙詞總決戰', short: 'Boss 關' }
+  ];
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function sample(a, n) { return shuffle(a).slice(0, n); }
+  function words(s) { return (s || '').split(/[\s　、，]+/).filter(Boolean); }
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  // ---------- 題庫 ----------
+  var cache = {};
+  function load(n) { return Promise.resolve(DATA); }
+
+  // 每個題目物件：{id, r, lv, s, o[], a(index) | ans(text), x, ctx, t:'mc'|'fill'}
+  function mk(r, lv, s, opts, ans, x, ctx) {
+    var o = shuffle(opts), a = o.indexOf(ans);
+    return { id: r + '|' + lv + '|' + s.slice(0, 60) + '|' + ans, r: r, lv: lv, t: 'mc', s: s, o: o, a: a, x: x || '', ctx: ctx || '' };
+  }
+
+  function explain(it) { return it.w + '：' + it.p.map(function (p) { return p[0] + '，' + p[1]; }).join('；') + '。' + it.k + '「' + it.d.split('。')[0] + '」。'; }
+  function poolOf(B, it) { return B.idioms.filter(function (y) { return y !== it && (it.g || []).indexOf(y.w) < 0; }); }
+  function distinct(arr, key, ex, n) {
+    var seen = [ex], o = [];
+    shuffle(arr).forEach(function (y) { if (o.length < n && seen.indexOf(y[key]) < 0) { seen.push(y[key]); o.push(y); } });
+    return o;
+  }
+  function byW(B, w) { return B.idioms.filter(function (y) { return y.w === w; })[0]; }
+  function gen(B, lv) {
+    var r = 0, I = B.idioms, out = [];
+    if (lv === 'boss') {
+      ['def', 'ex', 'clue', 'char', 'hand'].forEach(function (l) { out = out.concat(gen(B, l)); });
+      return out;
+    }
+    if (lv === 'def') {
+      I.forEach(function (it) {
+        var m1 = distinct(poolOf(B, it), 's', it.s, 3);
+        out.push(mk(r, lv, '「' + it.w + '」的衍生義（引申義）是：', [it.s].concat(m1.map(function (y) { return y.s; })), it.s, explain(it)));
+        var m2 = distinct(poolOf(B, it), 's', it.s, 3);
+        out.push(mk(r, lv, '哪一個詞語的衍生義是：「' + it.s + '」', [it.w].concat(m2.map(function (y) { return y.w; })), it.w, explain(it)));
+      });
+    } else if (lv === 'ex') {
+      I.forEach(function (it) {
+        if (it.e.indexOf(it.w) < 0) return;
+        out.push(mk(r, lv, it.e.split(it.w).join('□□'), [it.w].concat(sample(poolOf(B, it), 3).map(function (y) { return y.w; })), it.w, explain(it)));
+      });
+    } else if (lv === 'clue') {
+      I.forEach(function (it) {
+        out.push(mk(r, lv, it.clue, [it.w].concat(sample(poolOf(B, it), 3).map(function (y) { return y.w; })), it.w, explain(it)));
+      });
+    } else if (lv === 'char') {
+      B.glyph.forEach(function (g) {
+        var it = byW(B, g.w), x = it ? explain(it) : '';
+        out.push(mk(r, lv, '請選出符合注音的正確字形：' + g.q, [g.a].concat(g.o), g.a, x));
+        out.push({ id: r + '|' + lv + '|' + g.q + '|fill', r: r, lv: lv, t: 'fill', s: '請寫出符合注音的正確字形：' + g.q, ans: g.a, alt: [], x: x, tag: '字形' });
+      });
+    } else {
+      B.mc.forEach(function (m) {
+        var q = mk(r, lv, m.s, [m.c].concat(m.w), m.c, m.x); q.tag = '綜合測驗'; out.push(q);
+      });
+      I.forEach(function (it) {
+        var q = mk(r, lv, '下列哪一個詞語，引申為「' + it.s + '」？', [it.w].concat(distinct(poolOf(B, it), 's', it.s, 3).map(function (y) { return y.w; })), it.w, explain(it));
+        q.tag = '反向思考'; out.push(q);
+      });
+    }
+    return out;
+  }
+
+  function optText(q, i) { return q.o[i]; }
+  function ansText(q) { return q.t === 'fill' ? q.ans : '(' + L[q.a] + ') ' + q.o[q.a]; }
+
+  // ---------- 錯題本 ----------
+  var WB = 'shuangci-wrongbook';
+  function wb() { return store.get(WB, {}); }
+  function wbSave(o) { store.set(WB, o); wbCount(); }
+  function wbCount() { $('wbn').textContent = Object.keys(wb()).length; }
+  function wbMark(q, ok) {
+    var o = wb();
+    if (!ok) { o[q.id] = { q: q, streak: 0, at: Date.now() }; }
+    else if (o[q.id]) { o[q.id].streak = (o[q.id].streak || 0) + 1; if (o[q.id].streak >= 2) delete o[q.id]; }
+    wbSave(o);
+  }
+
+  // ---------- 星星 ----------
+  function starsKey(r) { return 'shuangci-stars-r' + r; }
+  function starStr(n) { return '★★★'.slice(0, n) + '☆☆☆'.slice(0, 3 - n); }
+
+  // ---------- 首頁 ----------
+  var R = 1;
+  var B = DATA;
+  function renderLevels() {
+    var st = store.get(starsKey(R), {}), h = '';
+    LEVELS.forEach(function (lv) {
+      var n = B ? gen(B, lv.id).length : 0;
+      h += '<button type="button" class="level" data-lv="' + lv.id + '" style="--c:' + lv.c + '"' + (n ? '' : ' disabled') + '><span class="ic">' + lv.ic + '</span><span><b>' + lv.name + '</b><small>' + (n ? '每關 ' + Math.min(PER, n) + ' 題（題庫 ' + n + ' 題）' : '本回沒有這類題目') + '</small></span><span class="st" aria-label="' + (st[lv.id] || 0) + ' 顆星">' + starStr(st[lv.id] || 0) + '</span></button>';
+    });
+    $('levels').innerHTML = h;
+    Array.prototype.forEach.call(document.querySelectorAll('.level'), function (b) { b.onclick = function () { startLevel(b.getAttribute('data-lv')); }; });
+    $('projBtns').innerHTML = LEVELS.map(function (lv) { return '<button type="button" class="btn ghost" data-lv="' + lv.id + '">' + lv.ic + ' ' + lv.short + '</button>'; }).join('');
+    Array.prototype.forEach.call($('projBtns').querySelectorAll('button'), function (b) { b.onclick = function () { startProj(b.getAttribute('data-lv')); }; });
+  }
+  function setRound() { document.title = '雙詞衍生義闖關站'; $('loadMsg').textContent = B.idioms.length + ' 個雙詞'; renderLevels(); }
+
+  ['f-cls', 'f-seat', 'f-name'].forEach(function (id) {
+    var v = store.get('shuangci-' + id, ''); if (v && !$(id).value) $(id).value = v;
+    $(id).addEventListener('change', function () { store.set('shuangci-' + id, $(id).value.trim()); });
+  });
+
+  // ---------- 作答 ----------
+  var cur = null;
+  function show(id) { ['home', 'play', 'done'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); }); window.scrollTo(0, 0); }
+  function startLevel(lv) {
+    if (!B) return;
+    var all = gen(B, lv), qs = sample(all, PER);
+    var meta = LEVELS.filter(function (x) { return x.id === lv; })[0];
+    cur = { lv: lv, title: meta.name, qs: qs, i: 0, ok: 0, wrong: [], review: false };
+    show('play'); renderQ();
+  }
+  function startReview() {
+    var items = Object.keys(wb()).map(function (k) { return wb()[k].q; });
+    if (!items.length) { alert('錯題本是空的，太棒了！'); return; }
+    cur = { lv: 'review', title: '🧠 錯題複習', qs: sample(items, Math.min(20, items.length)), i: 0, ok: 0, wrong: [], review: true };
+    show('play'); renderQ();
+  }
+  function renderQ() {
+    var q = cur.qs[cur.i];
+    $('pTitle').textContent = cur.title;
+    $('pCount').textContent = '第 ' + (cur.i + 1) + ' / ' + cur.qs.length + ' 題　答對 ' + cur.ok;
+    $('pBar').style.width = (cur.i / cur.qs.length * 100) + '%';
+    var long = q.t === 'mc' && q.o.some(function (o) { return [...o].length > 12; });
+    var h = '';
+    if (q.tag || cur.review) h += '<span class="qtag">' + esc('' + (q.tag || '')) + '</span>';
+    if (q.ctx) h += '<div class="ctx">' + esc(q.ctx) + '</div>';
+    h += '<p class="stem">' + esc(q.s) + '</p>';
+    if (q.t === 'mc') h += '<div class="opts' + (long ? ' long' : '') + '">' + q.o.map(function (o, k) { return '<button type="button" class="opt" data-k="' + k + '">(' + L[k] + ') ' + esc(o) + '</button>'; }).join('') + '</div>';
+    else h += '<form class="fillrow" id="fillF"><input id="fillI" type="text" autocomplete="off" aria-label="作答"><button class="btn" type="submit">送出</button></form>';
+    h += '<div class="fb" id="fb" aria-live="polite"></div><div class="row" style="margin-top:10px"><button class="btn hidden" id="next" type="button">' + (cur.i + 1 < cur.qs.length ? '下一題 →' : '看結果') + '</button></div>';
+    $('qcard').innerHTML = h;
+    if (q.t === 'mc') Array.prototype.forEach.call($('qcard').querySelectorAll('.opt'), function (b) { b.onclick = function () { answer(+b.getAttribute('data-k')); }; });
+    else { $('fillF').onsubmit = function (e) { e.preventDefault(); var v = $('fillI').value.trim(); if (v) answer(v); }; $('fillI').focus(); }
+    $('next').onclick = next;
+  }
+  function norm(s) { return String(s).replace(/[\s　（）()「」]/g, ''); }
+  function answer(v) {
+    var q = cur.qs[cur.i], ok;
+    if (q.t === 'mc') {
+      ok = v === q.a;
+      Array.prototype.forEach.call($('qcard').querySelectorAll('.opt'), function (b) {
+        var k = +b.getAttribute('data-k'); b.disabled = true;
+        if (k === q.a) b.classList.add('right'); else if (k === v) b.classList.add('wrong');
+      });
+    } else {
+      ok = [q.ans].concat(q.alt || []).some(function (a) { return norm(a) === norm(v); });
+      $('fillI').disabled = true; $('fillF').querySelector('button').disabled = true;
+    }
+    if (ok) cur.ok++; else cur.wrong.push(q);
+    wbMark(q, ok);
+    var fb = $('fb');
+    fb.className = 'fb ' + (ok ? 'ok' : 'no');
+    fb.innerHTML = (ok ? '✔ 答對了！' : '✘ 正確答案：' + esc(ansText(q))) + (q.x ? '<div class="x">' + esc(q.x) + '</div>' : '');
+    $('pCount').textContent = '第 ' + (cur.i + 1) + ' / ' + cur.qs.length + ' 題　答對 ' + cur.ok;
+    $('next').classList.remove('hidden'); $('next').focus();
+  }
+  function next() { cur.i++; if (cur.i < cur.qs.length) renderQ(); else finish(); }
+  function finish() {
+    var n = cur.qs.length, k = cur.ok, pct = k / n;
+    var s = pct >= .9 ? 3 : pct >= .7 ? 2 : pct >= .5 ? 1 : 0;
+    if (!cur.review) {
+      var st = store.get(starsKey(R), {}); if (s > (st[cur.lv] || 0)) { st[cur.lv] = s; store.set(starsKey(R), st); }
+      sendScore(cur, k, n);
+    }
+    var h = '<h2>' + esc(cur.title) + '</h2><div class="big">' + starStr(s) + '</div><p style="font-size:1.3rem">答對 ' + k + ' / ' + n + ' 題</p><p id="sendMsg" class="crumb"></p>';
+    if (cur.wrong.length) h += '<div style="text-align:left"><b>這次答錯的題目（已收進錯題本）：</b><ol class="wlist">' + cur.wrong.map(function (q) { return '<li>' + esc(q.s) + '<br><span class="crumb">答案：' + esc(ansText(q)) + '</span></li>'; }).join('') + '</ol></div>';
+    h += '<div class="row" style="justify-content:center;margin-top:14px"><button class="btn" id="again" type="button">再玩一次</button><button class="btn ghost" id="back" type="button">回關卡</button></div>';
+    $('doneBox').innerHTML = h; show('done');
+    var lv = cur.lv;
+    $('again').onclick = function () { if (lv === 'review') startReview(); else startLevel(lv); };
+    $('back').onclick = function () { renderLevels(); show('home'); };
+    if (window._sendMsg) { $('sendMsg').textContent = window._sendMsg; window._sendMsg = ''; }
+  }
+  function sendScore(c, k, n) {
+    window._sendMsg = '';
+    if (!window.GuwenAuth || !GuwenAuth.user) { window._sendMsg = ''; return; }
+    var cls = $('f-cls').value.trim(), seat = $('f-seat').value.trim();
+    var meta = LEVELS.filter(function (x) { return x.id === c.lv; })[0];
+    var ans = c.qs.map(function (q) { return c.wrong.indexOf(q) >= 0 ? '0' : '1'; }).join('');
+    fetch('/api/scores', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quiz: '雙詞衍生義闖關', cls: cls, seat: seat, mode: meta.short, total: Math.round(k * 100 / n), detail: { 關卡: meta.name, 答對: k + '/' + n }, answers: ans }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { var m = $('sendMsg'); if (m) m.textContent = j && j.ok ? '✓ 成績已送給老師' : '成績送出失敗'; })
+      .catch(function () { var m = $('sendMsg'); if (m) m.textContent = '成績送出失敗（網路問題）'; });
+  }
+  $('pQuit').onclick = function () { if (confirm('離開這一關？目前的作答不會計分。')) { renderLevels(); show('home'); } };
+  $('wbReview').onclick = startReview;
+  $('wbClear').onclick = function () { if (confirm('確定清空錯題本？')) wbSave({}); };
+
+  // ---------- 列印／下載 ----------
+  function sheetHTML(title, qs, withAns, forWord) {
+    var h = '<h1>' + esc(title) + '</h1><p>班級：＿＿＿＿　座號：＿＿＿＿　姓名：＿＿＿＿＿＿　得分：＿＿＿＿</p>';
+    qs.forEach(function (q, i) {
+      h += '<div class="pq"><p>' + (q.t === 'mc' ? '（　）' : '') + (i + 1) + '. ' + '' + esc(q.s) + '</p>';
+      if (q.ctx) h += '<p style="font-size:10pt;text-indent:2em">' + esc(q.ctx) + '</p>';
+      if (q.t === 'mc') {
+        var long = q.o.some(function (o) { return [...o].length > 12; });
+        h += long ? q.o.map(function (o, k) { return '<p style="margin:0 0 0 2em">(' + L[k] + ') ' + esc(o) + '</p>'; }).join('') : '<p style="margin:0 0 0 2em">' + q.o.map(function (o, k) { return '(' + L[k] + ') ' + esc(o); }).join('　') + '</p>';
+      } else h += '<p style="margin:0 0 0 2em">答：＿＿＿＿＿＿＿＿</p>';
+      if (withAns) h += '<p style="margin:0 0 0 2em;color:#b5345f">答案：' + esc(ansText(q)) + (q.x ? '　' + esc(q.x) : '') + '</p>';
+      h += '</div>';
+    });
+    if (!withAns) {
+      h += '<h2 style="page-break-before:always">參考答案</h2><p>' + qs.map(function (q, i) { return (i + 1) + '.' + (q.t === 'mc' ? L[q.a] : q.ans); }).join('　') + '</p>';
+    }
+    return h;
+  }
+  function printSheet(title, qs, withAns) { $('printArea').innerHTML = sheetHTML(title, qs, withAns); window.print(); }
+  function downloadDoc(filename, title, qs, withAns) {
+    var body = sheetHTML(title, qs, withAns, true);
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>body{font-family:"Microsoft JhengHei";font-size:12pt;line-height:1.6}h1{font-size:16pt;text-align:center}p{margin:0 0 4pt}.pq{margin:0 0 8pt}</style></head><body>' + body + '</body></html>';
+    var blob = new Blob(['﻿', html], { type: 'application/msword' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  function wbItems() { var o = wb(); return Object.keys(o).map(function (k) { return o[k].q; }).sort(function (a, b) { return a.r - b.r; }); }
+  function who() { var n = $('f-name').value.trim(); return n ? n + '的' : '我的'; }
+  $('wbPrint').onclick = function () { var q = wbItems(); if (!q.length) return alert('錯題本是空的'); printSheet(who() + '雙詞錯題卷', q, false); };
+  $('wbDoc').onclick = function () { var q = wbItems(); if (!q.length) return alert('錯題本是空的'); downloadDoc('雙詞錯題本.doc', who() + '雙詞錯題本', q, true); };
+
+  // ---------- 抽題區 ----------
+  var TYPES = LEVELS.map(function (l) { return { id: l.id, name: l.name.replace(/^.*：/, '') }; });
+  var picked = [];
+  $('openPick').onclick = function () {
+    $('pick').classList.toggle('hidden');
+    if ($('pkRounds').children.length) return;
+    var h = '';
+    for (var i = 1; i <= ROUNDS; i++) h += '<label><input type="checkbox" value="' + i + '"' + (i === R ? ' checked' : '') + '> 第' + i + '回</label>';
+    $('pkRounds').innerHTML = h;
+    $('pkTypes').innerHTML = TYPES.map(function (t) { return '<label><input type="checkbox" value="' + t.id + '" checked> ' + t.name + '</label>'; }).join('');
+  };
+  function checked(id) { return Array.prototype.map.call($(id).querySelectorAll('input:checked'), function (x) { return x.value; }); }
+  $('pkGo').onclick = function () {
+    var rs = checked('pkRounds').map(Number), ts = checked('pkTypes'), n = Math.max(1, Math.min(200, +$('pkN').value || 30));
+    if (!rs.length || !ts.length) return alert('請至少選一個回次和一種題型');
+    $('pkPrev').classList.remove('hidden'); $('pkPrev').textContent = '抽題中…';
+    Promise.all(rs.map(load)).then(function (bs) {
+      var pool = [];
+      bs.forEach(function (b) { ts.forEach(function (t) { pool = pool.concat(gen(b, t)); }); });
+      picked = sample(pool, n).sort(function (a, b) { return a.r - b.r; });
+      $('pkPrev').innerHTML = '<b>共 ' + picked.length + ' 題</b>（題庫 ' + pool.length + ' 題）<ol>' + picked.map(function (q) { return '<li>' + esc(q.s) + ' <span class="crumb">→ ' + esc(ansText(q)) + '</span></li>'; }).join('') + '</ol>';
+      ['pkStu', 'pkTea', 'pkPrint'].forEach(function (id) { $(id).disabled = !picked.length; });
+    }).catch(function () { $('pkPrev').textContent = '題庫載入失敗，請重新整理'; });
+  };
+  function pkTitle() { return '雙詞衍生義 抽題卷'; }
+  $('pkStu').onclick = function () { downloadDoc(pkTitle() + '（學生版）.doc', pkTitle(), picked, false); };
+  $('pkTea').onclick = function () { downloadDoc(pkTitle() + '（教師版）.doc', pkTitle() + '（教師版）', picked, true); };
+  $('pkPrint').onclick = function () { printSheet(pkTitle(), picked, false); };
+
+  // ---------- 投影模式 ----------
+  var P = null;
+  function startProj(lv) {
+    if (!B) return;
+    var meta = LEVELS.filter(function (x) { return x.id === lv; })[0];
+    P = { qs: sample(gen(B, lv), PER), i: 0, shown: false, title: meta.name, teams: store.get('shuangci-teams', [0, 0, 0, 0, 0]) };
+    $('proj').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+    projRender();
+  }
+  function projRender() {
+    var q = P.qs[P.i];
+    $('prTitle').textContent = P.title;
+    $('prCount').textContent = (P.i + 1) + ' / ' + P.qs.length;
+    $('prStem').textContent = q.s;
+    var long = q.t === 'mc' && q.o.some(function (o) { return [...o].length > 10; });
+    $('prOpts').className = 'popts' + (long ? ' long' : '');
+    $('prOpts').innerHTML = q.t === 'mc' ? q.o.map(function (o, k) { return '<div class="' + (P.shown && k === q.a ? 'right' : '') + '">(' + L[k] + ') ' + esc(o) + '</div>'; }).join('') : '';
+    $('prAns').textContent = P.shown ? '答案：' + ansText(q) + (q.x ? '　' + q.x : '') : '';
+    $('prTeams').innerHTML = P.teams.map(function (s, k) { return '<div class="team">第' + (k + 1) + '組 <button type="button" data-t="' + k + '" data-d="-1" aria-label="第' + (k + 1) + '組減一分">−</button><b>' + s + '</b><button type="button" data-t="' + k + '" data-d="1" aria-label="第' + (k + 1) + '組加一分">＋</button></div>'; }).join('');
+    Array.prototype.forEach.call($('prTeams').querySelectorAll('button'), function (b) { b.onclick = function () { P.teams[+b.getAttribute('data-t')] += +b.getAttribute('data-d'); store.set('shuangci-teams', P.teams); projRender(); }; });
+  }
+  function projStep(d) {
+    if (d > 0 && !P.shown) { P.shown = true; return projRender(); }
+    var j = P.i + d; if (j < 0 || j >= P.qs.length) return;
+    P.i = j; P.shown = false; projRender();
+  }
+  function projQuit() { $('proj').classList.add('hidden'); document.body.style.overflow = ''; P = null; }
+  $('prQuit').onclick = projQuit;
+  document.addEventListener('keydown', function (e) {
+    if (!P) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); projStep(1); }
+    else if (e.key === 'ArrowRight') projStep(1);
+    else if (e.key === 'ArrowLeft') projStep(-1);
+    else if (e.key === 'Escape') projQuit();
+    else if (e.key === '+' || e.key === '=') { if (P.teams.length < 8) { P.teams.push(0); store.set('shuangci-teams', P.teams); projRender(); } }
+    else if (e.key === '-') { if (P.teams.length > 2) { P.teams.pop(); store.set('shuangci-teams', P.teams); projRender(); } }
+    else if (e.key === '0') { P.teams = P.teams.map(function () { return 0; }); store.set('shuangci-teams', P.teams); projRender(); }
+  });
+
+  wbCount();
+  setRound();
+})();
+</script>
+</body>
+</html>
