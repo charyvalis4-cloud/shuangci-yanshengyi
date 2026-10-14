@@ -40,11 +40,11 @@ window.GAME={pfx:"shuangci_game",home:"📚 雙詞衍生義闖關站",sub:"雙�
 
 HEAD = {
  "review": ('<link rel="stylesheet" href="/assets/review-game.css">\n<script src="/assets/quiz-auth.js" defer></script>\n<script src="/assets/game-score.js" defer></script>\n<script src="/assets/page-qr.js" defer></script>',
-            '<nav class="topnav noprint"><a href="../">← 總複習</a>　<a href="../shuangci-1/">互動版（雙詞衍生義）</a></nav>', True, "/assets/review-game.js"),
+            '<nav class="topnav noprint"><a href="../">← 總複習</a>　<a href="../shuangci-1/">互動版（雙詞衍生義）</a>　<a href="../shuangci-1/shuangci-handout.docx">📄 Word 講義</a>　<a href="../shuangci-1/shuangci-handout-color.docx">🎨 Word 講義（彩色版）</a></nav>', True, "/assets/review-game.js"),
  "book1": ('<link rel="stylesheet" href="/assets/review-game.css">\n<script src="/assets/quiz-auth.js" defer></script>\n<script src="/assets/game-score.js" defer></script>\n<script src="/assets/page-qr.js" defer></script>',
-           '<nav class="topnav noprint"><a href="../">← 雙詞衍生義（互動版）</a>　<a href="../../">心囚　課文與字音字形</a></nav>', True, "/assets/review-game.js"),
+           '<nav class="topnav noprint"><a href="../">← 雙詞衍生義（互動版）</a>　<a href="../../">心囚　課文與字音字形</a>　<a href="../shuangci-handout.docx">📄 Word 講義</a>　<a href="../shuangci-handout-color.docx">🎨 Word 講義（彩色版）</a></nav>', True, "/assets/review-game.js"),
  "standalone": ('<link rel="stylesheet" href="review-game.css">',
-                '<nav class="topnav noprint"><a href="../">← 雙詞衍生義（互動版）</a></nav>', False, "review-game.js"),
+                '<nav class="topnav noprint"><a href="../">← 雙詞衍生義（互動版）</a>　<a href="../shuangci-handout.docx">📄 Word 講義</a>　<a href="../shuangci-handout-color.docx">🎨 Word 講義（彩色版）</a></nav>', False, "review-game.js"),
 }
 WHO = ('<div id="who" class="noprint" role="group" aria-label="學生資料（登入後闖關成績會送給老師）">\n  <label>班級 <input id="f-cls" maxlength="8" placeholder="例：711" autocomplete="off"></label>\n'
        '  <label>座號 <input id="f-seat" maxlength="2" inputmode="numeric" placeholder="例：5" autocomplete="off"></label>\n  <label>姓名 <input id="f-name" maxlength="10" autocomplete="off"></label>\n</div>\n')
